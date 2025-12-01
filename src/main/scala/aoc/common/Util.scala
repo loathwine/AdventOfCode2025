@@ -72,6 +72,7 @@ object Util:
     result
 
   def posMod(a: BigInt, m: BigInt): BigInt = (a % m + m) % m
+  def posMod(a: Int, m: Int): Int = (a % m + m) % m
 
   def modularInverse(a: BigInt, m: BigInt): BigInt =
     val (_, x, _) = gcdExtended(a, m)
