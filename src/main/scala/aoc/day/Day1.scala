@@ -9,7 +9,9 @@ import aoc.common.Parser
 import aoc.common.Util.posMod
 import aoc.day.DayCase.{Puzzle, Test}
 
-object Day1 extends Day[Int, Int]:
+object Day1 extends Day:
+  type P1 = Int
+  type P2 = Int
 
   enum RotateDir:
     case Left
@@ -22,7 +24,7 @@ object Day1 extends Day[Int, Int]:
       num <- Parser.parseInt(10)
     yield Rotation(dir, num)
 
-  val parseInput: Parser[NonEmptyList[Rotation]]             = Parser.nonEmptyListOf("\n")(Rotation.parser)
+  val parseInput: Parser[List[Rotation]]                      = Parser.separatedBy("\n")(Rotation.parser)
   def rotateM(limit: Int)(curr: Int, rotation: Rotation): Int =
     val change = rotation.dir match
       case RotateDir.Left  => -rotation.num
@@ -30,10 +32,10 @@ object Day1 extends Day[Int, Int]:
     val next   = posMod(curr + change, limit)
     next
 
-  def part1(in: String): Task[Int] = ZIO.attempt {
-    val rotations       = parseInput.unsafeParse(in)
-    val rotate = rotateM(100)
-    val results = rotations.scanLeft(50)(rotate)
+  def part1(in: String): Task[P1] = ZIO.attempt {
+    val rotations = parseInput.unsafeParse(in)
+    val rotate    = rotateM(100)
+    val results   = rotations.scanLeft(50)(rotate)
     results.count(_ == 0)
   }
 
@@ -41,14 +43,14 @@ object Day1 extends Day[Int, Int]:
     if rotation.num == 100 then (curr, true)
     else
       rotation.dir match
-        case RotateDir.Left =>
+        case RotateDir.Left  =>
           val next = curr - rotation.num
           (posMod(next, 100), next <= 0 && curr != 0)
         case RotateDir.Right =>
           val next = curr + rotation.num
           (posMod(next, 100), next >= 100 && curr != 0)
 
-  def part2(in: String): Task[Int] = ZIO.attempt {
+  def part2(in: String): Task[P2] = ZIO.attempt {
     val rotations       = parseInput.unsafeParse(in)
     val simpleRotations = rotations.toList
       .flatMap(rotation =>
@@ -61,7 +63,7 @@ object Day1 extends Day[Int, Int]:
     results.count(_.clicked)
   }
 
-  val cases: List[DayCase[Int, Int]] = List(
+  val cases: List[DayCase[P1, P2]] = List(
     Test(
       "example",
       InputString("""L68

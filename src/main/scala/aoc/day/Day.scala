@@ -8,7 +8,9 @@ import aoc.common.Util.normalizeNewLine
 import aoc.day.Day.dayString
 import aoc.day.DayCase
 
-trait Day[P1, P2] extends ZIOAppDefault:
+trait Day extends ZIOAppDefault:
+  type P1
+  type P2
 
   def logic: ZIO[Scope, Throwable, Unit] =
     ZIO.foreachDiscard(cases) { dayCase =>
