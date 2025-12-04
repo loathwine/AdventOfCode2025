@@ -58,6 +58,6 @@ object Day4 extends Day:
       13,
       43
     ),
-    Puzzle(ResourceInput("day4puzzle.txt"), 1578)
+    Puzzle(ResourceInput("day4puzzle.txt"), 1578, 10132)
   )
 end Day4
