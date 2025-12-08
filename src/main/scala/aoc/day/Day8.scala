@@ -11,6 +11,7 @@ import neotype.Subtype
 import neotype.common.NonEmptyString
 import scala.annotation.tailrec
 
+// This was pretty slow. Probably naive data structures.
 object Day8 extends Day:
   type P1 = Int
   type P2 = Int
@@ -19,7 +20,7 @@ object Day8 extends Day:
     def -(p: Pos3d): Pos3d = Pos3d(x - p.x, y - p.y, z - p.z)
 
     // Convert intermediate to double to avoid integer overflow!
-    def length: Double     = math.sqrt(x.toDouble * x.toDouble + y.toDouble * y.toDouble + z.toDouble * z.toDouble)
+    def length: Double = math.sqrt(x.toDouble * x.toDouble + y.toDouble * y.toDouble + z.toDouble * z.toDouble)
 
   object Pos3d:
     given parser: Parser[Pos3d] = for
@@ -33,23 +34,25 @@ object Day8 extends Day:
 
   // This is union-find ish
   case class Problem(take: Int, junctions: List[Junction]):
-    def convertCircuitMapToSet(circuitMap: Map[Junction, Junction]): Set[Set[Junction]] = circuitMap.groupBy(_._2).map(_._2.keySet).toSet
+    val initialCircuitMap: Map[Junction, Junction]                                      = junctions.map(x => x -> x).toMap
+    def convertCircuitMapToSet(circuitMap: Map[Junction, Junction]): Set[Set[Junction]] =
+      circuitMap.groupMapReduce(_._2)(x => Set(x._1))(_ ++ _).values.toSet
 
     // This is union-find ish
-    private def connect(
-                              toConnect: (Junction, Junction),
-                              circuitMap: Map[Junction, Junction]
-                            ): Map[Junction, Junction] =
-        val (j1, j2) = toConnect
-        val c1 = circuitMap(j1)
-        val c2 = circuitMap(j2)
-        if c1 == c2 then circuitMap
-        else
-          // Merge c1 and c2
-          val s1 = circuitMap.filter(_._2 == c1).keySet
-          val s2 = circuitMap.filter(_._2 == c2).keySet
-          if s1.size > s2.size then circuitMap ++ s2.map(_ -> c1).toMap
-          else circuitMap ++ s1.map(_ -> c2).toMap
+    def connect(
+      toConnect: (Junction, Junction),
+      circuitMap: Map[Junction, Junction]
+    ): Map[Junction, Junction] =
+      val (j1, j2) = toConnect
+      val c1       = circuitMap(j1)
+      val c2       = circuitMap(j2)
+      if c1 == c2 then circuitMap
+      else
+        // Merge c1 and c2
+        val s1 = circuitMap.filter(_._2 == c1).keySet
+        val s2 = circuitMap.filter(_._2 == c2).keySet
+        if s1.size > s2.size then circuitMap ++ s2.map(_ -> c1).toMap
+        else circuitMap ++ s1.map(_ -> c2).toMap
 
     @tailrec
     private def findCircuits(
@@ -58,10 +61,10 @@ object Day8 extends Day:
     ): Set[Set[Junction]] =
       combine match
         case Nil              =>
-          circuitMap.toList.groupBy(_._2).map(_._2.map(_._1).toSet).toSet
+          circuitMap.groupBy(_._2).map(_._2.keySet).toSet
         case (j1, j2) :: tail =>
-          val c1          = circuitMap(j1)
-          val c2          = circuitMap(j2)
+          val c1            = circuitMap(j1)
+          val c2            = circuitMap(j2)
           val newCircuitMap =
             if c1 == c2 then circuitMap
             else
@@ -73,7 +76,7 @@ object Day8 extends Day:
           findCircuits(tail, newCircuitMap)
 
     def findAllCircuits(combine: List[(Junction, Junction)]): Set[Set[Junction]] =
-      findCircuits(combine, junctions.map(x => x -> x).toMap)
+      findCircuits(combine, initialCircuitMap)
 
   end Problem
 
@@ -83,25 +86,37 @@ object Day8 extends Day:
         .map(Problem.apply)
 
   def part1(in: String): Task[P1] = ZIO.attempt {
-    val problem  = Problem.parser.unsafeParse(in)
-    val closest  = problem.junctions
+    val problem        = Problem.parser.unsafeParse(in)
+    val closest        = problem.junctions
       .combinations(2)
       .map(l => l.head -> l(1))
       .toList
-      .map((j1, j2) => ((j1, j2), (j1 - j2).length))
-      .sortBy(_._2)
+      .sortBy((j1, j2) => (j1 - j2).length)
       .take(problem.take)
-    println(closest)
-    val circuits = problem.findAllCircuits(closest.map(_._1))
-    val top = circuits.toList.sortBy(_.size).reverse
-    if (problem.take == 1000) {
-      println(top.take(10).mkString("\n"))
-    }
+    val lastCircuitMap = Iterator
+      .iterate(closest -> problem.initialCircuitMap)((combine, cm) => combine.tail -> problem.connect(combine.head, cm))
+      .find(_._1 == Nil)
+      .get
+      ._2
+    val circuits       = problem.convertCircuitMapToSet(lastCircuitMap)
+    val top            = circuits.toList.sortBy(_.size).reverse
     top.take(3).map(_.size).product
   }
 
   def part2(in: String): Task[P2] = ZIO.attempt {
-    ???
+    val problem        = Problem.parser.unsafeParse(in)
+    val closest        = problem.junctions
+      .combinations(2)
+      .map(l => l.head -> l(1))
+      .toList
+      .sortBy((j1, j2) => (j1 - j2).length)
+    val lastPair = LazyList
+      .iterate(closest -> problem.initialCircuitMap)((combine, cm) => combine.tail -> problem.connect(combine.head, cm))
+      .dropWhile(x => problem.convertCircuitMapToSet(x._2).size > 2)
+      .takeWhile(x => problem.convertCircuitMapToSet(x._2).size == 2)
+      .last
+      ._1.head
+    lastPair._1.x * lastPair._2.x
   }
 
   val cases: List[DayCase[P1, P2]] = List(
@@ -128,8 +143,9 @@ object Day8 extends Day:
                     |862,61,35
                     |984,92,344
                     |425,690,689""".stripMargin),
-      40
+      40,
+      25272
     ),
-    Puzzle(ResourceInput("day8puzzle.txt"), 129564)
+    Puzzle(ResourceInput("day8puzzle.txt"), 129564, 42047840)
   )
 end Day8
