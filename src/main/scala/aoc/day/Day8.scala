@@ -17,7 +17,9 @@ object Day8 extends Day:
 
   case class Pos3d(x: Int, y: Int, z: Int):
     def -(p: Pos3d): Pos3d = Pos3d(x - p.x, y - p.y, z - p.z)
-    def length: Double     = math.sqrt(x * x + y * y + z * z)
+
+    // Convert intermediate to double to avoid integer overflow!
+    def length: Double     = math.sqrt(x.toDouble * x.toDouble + y.toDouble * y.toDouble + z.toDouble * z.toDouble)
 
   object Pos3d:
     given parser: Parser[Pos3d] = for
@@ -29,8 +31,26 @@ object Day8 extends Day:
   type Junction = Junction.Type
   object Junction extends Subtype[Pos3d]
 
+  // This is union-find ish
   case class Problem(take: Int, junctions: List[Junction]):
+    def convertCircuitMapToSet(circuitMap: Map[Junction, Junction]): Set[Set[Junction]] = circuitMap.groupBy(_._2).map(_._2.keySet).toSet
+
     // This is union-find ish
+    private def connect(
+                              toConnect: (Junction, Junction),
+                              circuitMap: Map[Junction, Junction]
+                            ): Map[Junction, Junction] =
+        val (j1, j2) = toConnect
+        val c1 = circuitMap(j1)
+        val c2 = circuitMap(j2)
+        if c1 == c2 then circuitMap
+        else
+          // Merge c1 and c2
+          val s1 = circuitMap.filter(_._2 == c1).keySet
+          val s2 = circuitMap.filter(_._2 == c2).keySet
+          if s1.size > s2.size then circuitMap ++ s2.map(_ -> c1).toMap
+          else circuitMap ++ s1.map(_ -> c2).toMap
+
     @tailrec
     private def findCircuits(
       combine: List[(Junction, Junction)],
@@ -38,18 +58,18 @@ object Day8 extends Day:
     ): Set[Set[Junction]] =
       combine match
         case Nil              =>
-          circuitMap.groupBy(_._2).map(_._2.keySet).toSet
+          circuitMap.toList.groupBy(_._2).map(_._2.map(_._1).toSet).toSet
         case (j1, j2) :: tail =>
-          val j1to          = circuitMap(j1)
-          val j2to          = circuitMap(j2)
+          val c1          = circuitMap(j1)
+          val c2          = circuitMap(j2)
           val newCircuitMap =
-            if j1to == j2to then circuitMap
+            if c1 == c2 then circuitMap
             else
-              // Merge j1to and j2to
-              val s1 = circuitMap.filter(_._2 == j1to).keySet
-              val s2 = circuitMap.filter(_._2 == j2to).keySet
-              if s1.size > s2.size then circuitMap ++ s2.map(_ -> j1to).toMap
-              else circuitMap ++ s1.map(_ -> j2to).toMap
+              // Merge c1 and c2
+              val s1 = circuitMap.filter(_._2 == c1).keySet
+              val s2 = circuitMap.filter(_._2 == c2).keySet
+              if s1.size > s2.size then circuitMap ++ s2.map(_ -> c1).toMap
+              else circuitMap ++ s1.map(_ -> c2).toMap
           findCircuits(tail, newCircuitMap)
 
     def findAllCircuits(combine: List[(Junction, Junction)]): Set[Set[Junction]] =
@@ -64,15 +84,20 @@ object Day8 extends Day:
 
   def part1(in: String): Task[P1] = ZIO.attempt {
     val problem  = Problem.parser.unsafeParse(in)
-    val circuits = problem.findAllCircuits(
-      problem.junctions
-        .combinations(2)
-        .map(l => l.head -> l(1))
-        .toList
-        .sortBy((j1, j2) => (j1 - j2).length)
-        .take(problem.take)
-    )
-    circuits.toList.map(_.size).sorted.reverse.take(3).product
+    val closest  = problem.junctions
+      .combinations(2)
+      .map(l => l.head -> l(1))
+      .toList
+      .map((j1, j2) => ((j1, j2), (j1 - j2).length))
+      .sortBy(_._2)
+      .take(problem.take)
+    println(closest)
+    val circuits = problem.findAllCircuits(closest.map(_._1))
+    val top = circuits.toList.sortBy(_.size).reverse
+    if (problem.take == 1000) {
+      println(top.take(10).mkString("\n"))
+    }
+    top.take(3).map(_.size).product
   }
 
   def part2(in: String): Task[P2] = ZIO.attempt {
@@ -105,6 +130,6 @@ object Day8 extends Day:
                     |425,690,689""".stripMargin),
       40
     ),
-    Puzzle(ResourceInput("day8puzzle.txt"))
+    Puzzle(ResourceInput("day8puzzle.txt"), 129564)
   )
 end Day8
