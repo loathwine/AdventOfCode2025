@@ -85,7 +85,12 @@ object Vector:
 
     def topLeft: Pos = Pos(min.x, max.y)
 
-    def bottomRight: Pos = Pos(max.x, min.y)
+    def bottomRight: Pos     = Pos(max.x, min.y)
+    def corners: Set[Pos]    = Set(min, Pos(min.x, max.y), Pos(max.x, min.y), max)
+    def allPosIncl: Set[Pos] = (for
+      x <- min.x to max.x
+      y <- min.y to max.y
+    yield Pos(x, y)).toSet
 
   // Returns (min, max) where min = Pos(minX, minY) and max = Pos(maxX, maxY)
   def findBoundingBoxIncl(positions: Set[Pos]): BoundingBox =
@@ -112,8 +117,8 @@ object Vector:
 
       // Angle of 3 consecutive points in the cycle.
       def angle(p1: Pos, p2: Pos, p3: Pos): Int =
-        val d1 = (p2 - p1).toDir
-        val d2 = (p3 - p2).toDir
+        val d1 = (p2 - p1).toDir.sign
+        val d2 = (p3 - p2).toDir.sign
 
         if d1 == d2 then 0
         else if d2 == d1.rotated90CW then 90
