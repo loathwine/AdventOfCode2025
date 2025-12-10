@@ -23,24 +23,28 @@ version := "1.0"
 // You can define other libraries as dependencies in your build like this:
 libraryDependencies ++= Seq(
 //  "org.typelevel" %% "cats-core" % "2.9.0",
-  "dev.zio"              %% "zio"           % "2.1.23",
-  "dev.zio"              %% "zio-streams"   % "2.1.23",
-  "dev.zio"              %% "zio-prelude"   % "1.0.0-RC42",
-  "io.github.kitlangton" %% "neotype"       % "0.3.36",
-  "dev.optics"           %% "monocle-core"  % "3.3.0",
-  "dev.optics"           %% "monocle-macro" % "3.3.0",
+  "dev.zio"              %% "zio"               % "2.1.23",
+  "dev.zio"              %% "zio-streams"       % "2.1.23",
+  "dev.zio"              %% "zio-prelude"       % "1.0.0-RC44",
+  "io.github.kitlangton" %% "neotype"           % "0.3.37",
+  "dev.optics"           %% "monocle-core"      % "3.3.0",
+  "dev.optics"           %% "monocle-macro"     % "3.3.0",
   // Breeze for matrix operations
-  "org.scalanlp"         %% "breeze"        % "2.1.0",
-  "org.scalanlp"         %% "breeze-viz"    % "2.1.0",
+  "org.scalanlp"         %% "breeze"            % "2.1.0",
+  "org.scalanlp"         %% "breeze-viz"        % "2.1.0",
   // Scala 3 matrix operations
-  "io.github.dieproht"   %% "matr-bundle"   % "0.0.7",
+  "io.github.dieproht"   %% "matr-bundle"       % "0.0.7",
+  // Mathematical programming Scala (Linear programming, integer programming etc)
+  "com.github.vagmcs"    %% "optimus"           % "3.4.5",
+  "com.github.vagmcs"    %% "optimus-solver-oj" % "3.4.5",
+  "com.github.vagmcs"    %% "optimus-solver-lp" % "3.4.5",
   // Image generation
-  "org.creativescala"    %% "doodle"        % "0.32.0",
+  "org.creativescala"    %% "doodle"            % "0.32.0",
   // Refined types
-  "io.github.iltotore"   %% "iron"          % "3.2.1",
+  "io.github.iltotore"   %% "iron"              % "3.2.1",
   // Monocle
-  "dev.optics"           %% "monocle-core"  % "3.3.0",
-  "dev.optics"           %% "monocle-macro" % "3.3.0",
+  "dev.optics"           %% "monocle-core"      % "3.3.0",
+  "dev.optics"           %% "monocle-macro"     % "3.3.0",
 )
 
 // IMPORTANT NOTE: while build files look _kind of_ like regular Scala, it's

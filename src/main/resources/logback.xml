@@ -1,0 +1,14 @@
+<!-- Silence verbose INFO logs from optimus ILP solver -->
+<configuration>
+  <logger name="optimus" level="ERROR" />
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+  </appender>
+</configuration>
