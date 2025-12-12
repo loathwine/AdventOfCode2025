@@ -63,6 +63,8 @@ trait Parser[+A]:
     self.parse(s) match
       case Some((a, remainder)) => Some(Some(a) -> remainder)
       case None                 => Some(None -> s)
+
+  def multiple(n: Int): Parser[List[A]] = Parser.multiple(n, Some(n), None)(self)
 end Parser
 
 object Parser:
